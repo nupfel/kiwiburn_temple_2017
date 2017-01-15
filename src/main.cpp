@@ -15,7 +15,7 @@ const char *ssid = "Kiwiburn Temple";
 const char *password = "god of light";
 
 // global brightness, speed, hue and the currentLed
-unsigned int brightness = 50; // 0 - 255
+unsigned int brightness = 255; // 0 - 255
 unsigned int speed = 20;      // 1 - 255 ?
 byte hue = 0;
 byte currentLed = 0;
@@ -26,8 +26,6 @@ DNSServer dnsServer;
 ESP8266WebServer server(80);
 
 Ticker coloring;
-
-String responseHTML = "<h1>WELCOME!</h1><h2>You have entered a new level of experience!</h2>";
 
 bool TickerAttached = false;
 
@@ -48,26 +46,16 @@ uint16_t sequenceHueShift() {
   return 120;
 }
 
-
-
-void colorMe() {
-  int Color = random(0, 33);
-}
-
 void blackout() {
   if (TickerAttached) coloring.detach();
-  server.send(200, "text/html", responseHTML + "<h1> Entered DMX blackout</h1>");
-}
-
-void randomize() {
-  server.send(200, "text/html", responseHTML + "<h1> Entered Random</h1>");
-  TickerAttached = true;
-  coloring.attach(.5, colorMe);
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  server.send(200, "text/html", "<h1>Entered DMX blackout</h1>");
 }
 
 void white() {
   if (TickerAttached) coloring.detach();
-  server.send(200, "text/html", responseHTML + "<h1>Entered White</h1>");
+  fill_solid(leds, NUM_LEDS, CRGB::White);
+  server.send(200, "text/html", "<h1>Entered White</h1><p>brightness: " + String(brightness) + "</p>");
 }
 
 void rainbow() {
@@ -79,7 +67,7 @@ void rainbow() {
 
 void changeBrightness() {
     // grab brightness from GET /brightness/<value> or POST /brightness
-    // brightness = value;
+    FastLED.setBrightness(brightness);
 }
 
 void changeSpeed() {
@@ -91,7 +79,7 @@ void setup() {
   delay(1000);
   Serial.begin(9600);
   Serial.println();
-  Serial.print("Configuring access point...");
+  Serial.println("Configuring access point...");
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   WiFi.softAP(ssid, password);
@@ -99,21 +87,18 @@ void setup() {
   dnsServer.start(DNS_PORT, "temple.io", apIP);
 
   IPAddress myIP = WiFi.softAPIP();
-  Serial.print("AP IP address:");
+  Serial.print("IP address:");
   Serial.println(myIP);
   server.on("/off", blackout);
   server.on("/white", white);
-  server.on("/random", randomize);
   server.on("/rainbow", rainbow);
   server.on("/speed", changeSpeed);
   server.on("/brightness", changeBrightness);
   server.begin();
   Serial.println("HTTP server started");
+  WiFi.printDiag(Serial);
 
-
-
-
-  // DMXinit();
+  DMXinit();
 }
 
 void loop() {
