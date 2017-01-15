@@ -9,7 +9,12 @@
 #define NUM_LEDS    25
 #define LED_TYPE    DMXESPSERIAL
 #define COLOR_ORDER RGB
+#define BRIGHTNESS 255
+#define FRAMES_PER_SECOND  60 //maybe too fast
+
+
 CRGB leds[NUM_LEDS];
+uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 
 const char *ssid = "Kiwiburn Temple";
 const char *password = "god of light";
@@ -63,6 +68,8 @@ void rainbow() {
     // very slow rotating colour wheel on 12 apex strips
     // very slow rotating colour wheel on 12 square strips opposite direction
     // rainbow colours for apex circle
+    // Currently just rainbows though all strips
+    fill_rainbow( leds, NUM_LEDS, gHue, 1); // FastLED's built-in rainbow generator
 }
 
 void changeBrightness() {
@@ -107,7 +114,14 @@ void loop() {
   server.handleClient();
   //DMX.update();
 
-  delay = sequenceHueShift();
+  // Call the current pattern function once, updating the 'leds' array
+  rainbow();
+
+  // send the 'leds' array out to the actual LED strip
   FastLED.show();
-  FastLED.delay(delay);
+  // insert a delay to keep the framerate modest
+  FastLED.delay(1000/FRAMES_PER_SECOND);
+
+  // do some periodic updates
+  EVERY_N_MILLISECONDS( 1 ) { gHue++; } // slowly cycle the "base color" through the rainbow
 }
