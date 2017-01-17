@@ -9,8 +9,7 @@
 #define NUM_LEDS    25
 #define LED_TYPE    DMXESPSERIAL
 #define COLOR_ORDER RGB
-#define BRIGHTNESS 255
-#define FRAMES_PER_SECOND  60 //maybe too fast
+#define BRIGHTNESS  255
 
 
 CRGB leds[NUM_LEDS];
@@ -21,7 +20,7 @@ const char *password = "god of light";
 
 // global brightness, speed, hue and the currentLed
 unsigned int brightness = 255; // 0 - 255
-unsigned int speed = 20;      // 1 - 255 ?
+unsigned int fps = 60;      // maybe too fast
 byte hue = 0;
 byte currentLed = 0;
 
@@ -73,13 +72,18 @@ void rainbow() {
 }
 
 void changeBrightness() {
-    // grab brightness from GET /brightness/<value> or POST /brightness
-    FastLED.setBrightness(brightness);
+    // grab brightness from GET /brightness&value=<0-255>
+    brightness = server.arg("value").toInt();
+    if (brightness >= 0 || brightness <= 255) {
+        FastLED.setBrightness(brightness);
+        server.send(200, "text/html", "<h1>Changed Brightness: " + String(brightness) + "</h1>");
+    }
 }
 
-void changeSpeed() {
-    // grab brightness from GET /speed/<value> or POST /speed
-    // speed = value;
+void changeFPS() {
+    // grab brightness from GET /brightness&value=<0-255>
+    fps = server.arg("value").toInt();
+    server.send(200, "text/html", "<h1>Changed FPS: " + String(fps) + "</h1>");
 }
 
 void setup() {
@@ -99,7 +103,7 @@ void setup() {
   server.on("/off", blackout);
   server.on("/white", white);
   server.on("/rainbow", rainbow);
-  server.on("/speed", changeSpeed);
+  server.on("/fps", changeFPS);
   server.on("/brightness", changeBrightness);
   server.begin();
   Serial.println("HTTP server started");
@@ -120,7 +124,7 @@ void loop() {
   // send the 'leds' array out to the actual LED strip
   FastLED.show();
   // insert a delay to keep the framerate modest
-  FastLED.delay(1000/FRAMES_PER_SECOND);
+  FastLED.delay(1000/fps);
 
   // do some periodic updates
   EVERY_N_MILLISECONDS( 1 ) { gHue++; } // slowly cycle the "base color" through the rainbow
