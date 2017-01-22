@@ -182,10 +182,10 @@ void white() {
 void rainbow() {
     // default temple rainbow pattern:
     // very slow rotating colour wheel on 12 apex strips
-    my_fill_rainbow(rawleds, 12, diagonals, gHue, 21);
+    my_fill_rainbow(rawleds, 12, diagonals, gHue, 255/12);
 
     // very slow rotating colour wheel on 12 square strips opposite direction
-    my_fill_rainbow(rawleds, 12, squares, gHue, 21);
+    my_fill_rainbow(rawleds, 12, squares, gHue, 255/12);
 
     // rainbow colours for apex circle with same hue delta as 12 strips
     fill_rainbow(apex, 1, gHue, 255/12);
